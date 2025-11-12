@@ -53,9 +53,8 @@ const Footer = () => {
 
     const socialIcons = [
         { icon: FacebookIcon, link: "https://www.facebook.com/profile.php?id=61582829276428" },
-        { icon: InstagramIcon, link: "https://www.instagram.com" },
-        { icon: LinkedinIcon, link: "https://www.linkedin.com" },
-    ]  
+        { icon: InstagramIcon, link: "https://www.instagram.com/qui.ae_?igsh=dWV4eTc5cHZxMzFh&utm_source=qr" },
+    ];
 
     return (
     <footer className="bg-black text-slate-200 border-t border-slate-800 pt-0 lg:pt-12">
