@@ -184,8 +184,11 @@ const ProductDetails = ({ product }) => {
   };
 
   const handleOrderNow = () => {
+    // Determine final quantity: if bundle selected, use bundle qty, otherwise use quantity selector
+    const finalQty = selectedBundleQty > 1 ? selectedBundleQty * quantity : quantity;
+    
     // Add to cart for both guests and signed-in users
-    for (let i = 0; i < quantity; i++) {
+    for (let i = 0; i < finalQty; i++) {
       dispatch(addToCart({ productId: product.id }));
     }
     // Go directly to cart (guests can checkout there)
@@ -193,8 +196,11 @@ const ProductDetails = ({ product }) => {
   };
 
   const handleAddToCart = async () => {
+    // Determine final quantity: if bundle selected, use bundle qty, otherwise use quantity selector
+    const finalQty = selectedBundleQty > 1 ? selectedBundleQty * quantity : quantity;
+    
     // Add to cart for both guests and signed-in users
-    for (let i = 0; i < quantity; i++) {
+    for (let i = 0; i < finalQty; i++) {
       dispatch(addToCart({ productId: product.id }));
     }
     
