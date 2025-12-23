@@ -118,7 +118,7 @@ export default function StoreOrders() {
             'Customer Email': order.isGuest ? order.guestEmail : order.user?.email,
             'Customer Phone': order.isGuest ? order.guestPhone : order.address?.phone,
             'Customer Type': order.isGuest ? 'Guest' : 'Registered',
-            'Total Amount': `${currency}${order.total}`,
+            'Total Amount': `${currency}${Number(order.total).toFixed(2)}`,
             'Payment Method': order.paymentMethod,
             'Payment Status': order.isPaid ? 'PAID' : 'UNPAID',
             'Order Status': order.status,
@@ -222,7 +222,7 @@ export default function StoreOrders() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 font-medium text-slate-800">{currency}{order.total}</td>
+                                            <td className="px-4 py-3 font-medium text-slate-800">{currency}{Number(order.total).toFixed(2)}</td>
                                             <td className="px-4 py-3">{order.paymentMethod}</td>
                                             <td className="px-4 py-3">
                                                 {order.isCouponUsed ? (
@@ -451,10 +451,10 @@ export default function StoreOrders() {
                                             <div className="flex-1">
                                                 <p className="font-medium text-slate-900">{item.product?.name}</p>
                                                 <p className="text-sm text-slate-600">Quantity: {item.quantity}</p>
-                                                <p className="text-sm font-semibold text-slate-900">{currency}{item.price} each</p>
+                                                <p className="text-sm font-semibold text-slate-900">{currency}{Number(item.price).toFixed(2)} each</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-lg font-bold text-slate-900">{currency}{item.price * item.quantity}</p>
+                                                <p className="text-lg font-bold text-slate-900">{currency}{Number(item.price * item.quantity).toFixed(2)}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -470,7 +470,7 @@ export default function StoreOrders() {
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                                     <div>
                                         <p className="text-slate-500">Total Amount</p>
-                                        <p className="text-xl font-bold text-slate-900">{currency}{selectedOrder.total}</p>
+                                        <p className="text-xl font-bold text-slate-900">{currency}{Number(selectedOrder.total).toFixed(2)}</p>
                                     </div>
                                     <div>
                                         <p className="text-slate-500">Payment Method</p>
