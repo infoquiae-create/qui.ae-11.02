@@ -44,6 +44,13 @@ const ProductDetails = ({ product }) => {
     bulkVariants.length ? Number(bulkVariants[0].options.bundleQty) : null
   );
 
+  // Auto-update quantity when bundle selection changes
+  useEffect(() => {
+    if (selectedBundleQty && selectedBundleQty > 0) {
+      setQuantity(selectedBundleQty);
+    }
+  }, [selectedBundleQty]);
+
   const selectedVariant = (bulkVariants.length
     ? bulkVariants.find(v => Number(v.options?.bundleQty) === Number(selectedBundleQty))
     : variants.find(v => {
@@ -184,8 +191,8 @@ const ProductDetails = ({ product }) => {
   };
 
   const handleOrderNow = () => {
-    // Determine final quantity: if bundle selected, use bundle qty, otherwise use quantity selector
-    const finalQty = selectedBundleQty > 1 ? selectedBundleQty * quantity : quantity;
+    // Use the quantity selector value (which now syncs with bundle)
+    const finalQty = quantity;
     
     // Add to cart for both guests and signed-in users
     for (let i = 0; i < finalQty; i++) {
@@ -196,8 +203,8 @@ const ProductDetails = ({ product }) => {
   };
 
   const handleAddToCart = async () => {
-    // Determine final quantity: if bundle selected, use bundle qty, otherwise use quantity selector
-    const finalQty = selectedBundleQty > 1 ? selectedBundleQty * quantity : quantity;
+    // Use the quantity selector value (which now syncs with bundle)
+    const finalQty = quantity;
     
     // Add to cart for both guests and signed-in users
     for (let i = 0; i < finalQty; i++) {
