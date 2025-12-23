@@ -16,6 +16,7 @@ model User {
     email String
     image String
     cart  Json   @default("{}")
+    phone String?
 
     // Relations
     ratings     Rating[]

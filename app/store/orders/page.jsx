@@ -6,9 +6,10 @@ import { orderDummyData } from "@/assets/assets"
 import { useAuth } from "@clerk/nextjs"
 import axios from "axios"
 import toast from "react-hot-toast"
-import { Package, Truck, X, Download, Printer } from "lucide-react"
+import { Package, Truck, X, Download, Printer, FileSpreadsheet } from "lucide-react"
 import { downloadInvoiceHTML, printInvoiceHTML } from "@/lib/generateInvoiceHTML"
 import { downloadAwbBill } from "@/lib/generateAwbBill"
+import * as XLSX from 'xlsx';
 
 // Add updateTrackingDetails function
 // (must be inside the component, not top-level)
@@ -108,6 +109,44 @@ export default function StoreOrders() {
         ? orders
         : orders.filter(order => order.status === statusFilter);
 
+    const exportToExcel = () => {
+        const exportData = filteredOrders.map((order, index) => ({
+            'Sr. No.': index + 1,
+            'Order ID': order.id.slice(0, 8).toUpperCase(),
+            'Order Number': order.id,
+            'Customer Name': order.isGuest ? order.guestName : order.user?.name,
+            'Customer Email': order.isGuest ? order.guestEmail : order.user?.email,
+            'Customer Phone': order.isGuest ? order.guestPhone : order.address?.phone,
+            'Customer Type': order.isGuest ? 'Guest' : 'Registered',
+            'Total Amount': `${currency}${order.total}`,
+            'Payment Method': order.paymentMethod,
+            'Payment Status': order.isPaid ? 'PAID' : 'UNPAID',
+            'Order Status': order.status,
+            'Coupon Used': order.isCouponUsed ? order.coupon?.code : 'No',
+            'Tracking ID': order.trackingId || 'N/A',
+            'Courier': order.courier || 'N/A',
+            'Tracking URL': order.trackingUrl || 'N/A',
+            'Shipping Address': `${order.address?.street}, ${order.address?.city}, ${order.address?.state}, ${order.address?.zip}, ${order.address?.country}`,
+            'Address Name': order.address?.name,
+            'Address Phone': order.address?.phone,
+            'Products': order.orderItems?.map(item => `${item.product?.name} (Qty: ${item.quantity})`).join('; '),
+            'Order Date': new Date(order.createdAt).toLocaleString(),
+            'Last Updated': new Date(order.updatedAt).toLocaleString(),
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Orders');
+        
+        // Auto-size columns
+        const maxWidth = exportData.reduce((w, r) => Math.max(w, Object.keys(r).length), 10);
+        ws['!cols'] = Array(maxWidth).fill({ wch: 20 });
+        
+        const fileName = `Orders_${statusFilter}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        toast.success(`Exported ${exportData.length} orders to Excel`);
+    };
+
     useEffect(() => {
         fetchOrders();
     }, []);
@@ -116,7 +155,19 @@ export default function StoreOrders() {
 
     return (
         <>
-            <h1 className="text-2xl text-slate-500 mb-5">Store <span className="text-slate-800 font-medium">Orders</span></h1>
+            <div className="flex items-center justify-between mb-5">
+                <h1 className="text-2xl text-slate-500">Store <span className="text-slate-800 font-medium">Orders</span></h1>
+                {orders.length > 0 && (
+                    <button
+                        onClick={exportToExcel}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow"
+                        title="Export to Excel"
+                    >
+                        <FileSpreadsheet size={18} />
+                        <span className="text-sm">Export to Excel</span>
+                    </button>
+                )}
+            </div>
             {orders.length === 0 ? (
                 <p>No orders found</p>
             ) : (
