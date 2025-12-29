@@ -208,7 +208,7 @@ const OrderSummary = ({ totalPrice, items }) => {
                 // Clear cart immediately for COD orders
                 dispatch(clearCart())
                 toast.success(data.message)
-                router.push('/orders')
+                router.push(`/order-success?orderId=${data.order.id}`)
                 // Fetch updated cart from server to sync
                 dispatch(fetchCart({getToken}))
             }
@@ -359,9 +359,10 @@ const OrderSummary = ({ totalPrice, items }) => {
                             <div className='flex items-start justify-between gap-2'>
                                 <div className='flex-1'>
                                     <p className='font-semibold text-gray-900 text-sm'>{selectedAddress.name}</p>
-                                    <p className='text-xs text-gray-600 mt-1'>{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}</p>
+                                    <p className='text-xs text-gray-600 mt-1'>{selectedAddress.street}, {selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}</p>
+                                    <p className='text-xs text-gray-600'>{selectedAddress.phone}</p>
                                 </div>
-                                <button onClick={() => setSelectedAddress(null)} className='text-orange-600 hover:text-orange-700'>
+                                <button onClick={() => setSelectedAddress(null)} className='text-orange-600 hover:text-orange-700' title='Change Address'>
                                     <SquarePenIcon size={16} />
                                 </button>
                             </div>

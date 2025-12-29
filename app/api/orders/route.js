@@ -354,7 +354,16 @@ export async function POST(request){
                         });
                         return NextResponse.json({ message: 'Orders Placed Successfully', orders });
                     } else {
-                        return NextResponse.json({ message: 'Orders Placed Successfully', order });
+                        // Fetch the first order for signed-in user response
+                        const userOrder = await prisma.order.findUnique({
+                            where: { id: orderIds[0] },
+                            include: {
+                                user: true,
+                                orderItems: { include: { product: true } },
+                                address: true
+                            }
+                        });
+                        return NextResponse.json({ message: 'Orders Placed Successfully', order: userOrder });
                     }
 
     } catch (error) {
