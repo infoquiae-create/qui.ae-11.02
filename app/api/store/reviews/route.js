@@ -151,3 +151,57 @@ export async function POST(request) {
         }, { status: 500 });
     }
 }
+
+// DELETE: Delete a review for a product
+export async function DELETE(request) {
+    try {
+        const { userId } = getAuth(request);
+        const storeId = await authSeller(userId);
+        if (!storeId) {
+            return Response.json({ error: "Not authorized" }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const reviewId = searchParams.get('reviewId');
+
+        if (!reviewId) {
+            return Response.json({ error: "Review ID required" }, { status: 400 });
+        }
+
+        // Get the review and verify store ownership
+        const review = await prisma.rating.findUnique({
+            where: { id: reviewId },
+            include: {
+                product: {
+                    select: {
+                        storeId: true
+                    }
+                }
+            }
+        });
+
+        if (!review) {
+            return Response.json({ error: "Review not found" }, { status: 404 });
+        }
+
+        if (review.product.storeId !== storeId) {
+            return Response.json({ error: "Unauthorized to delete this review" }, { status: 403 });
+        }
+
+        // Delete the review
+        await prisma.rating.delete({
+            where: { id: reviewId }
+        });
+
+        return Response.json({
+            success: true,
+            message: "Review deleted successfully"
+        });
+
+    } catch (error) {
+        console.error('Delete review error:', error);
+        return Response.json({
+            error: error.message || "Failed to delete review"
+        }, { status: 500 });
+    }
+}

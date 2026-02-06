@@ -156,3 +156,49 @@ export async function GET(request) {
         }, { status: 500 });
     }
 }
+
+// DELETE: Delete a review (only by the user who created it)
+export async function DELETE(request) {
+    try {
+        const { userId } = getAuth(request);
+        if (!userId) {
+            return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const reviewId = searchParams.get('reviewId');
+
+        if (!reviewId) {
+            return Response.json({ error: "Review ID required" }, { status: 400 });
+        }
+
+        // Check if review exists and belongs to the current user
+        const review = await prisma.rating.findUnique({
+            where: { id: reviewId }
+        });
+
+        if (!review) {
+            return Response.json({ error: "Review not found" }, { status: 404 });
+        }
+
+        if (review.userId !== userId) {
+            return Response.json({ error: "You can only delete your own reviews" }, { status: 403 });
+        }
+
+        // Delete the review
+        await prisma.rating.delete({
+            where: { id: reviewId }
+        });
+
+        return Response.json({
+            success: true,
+            message: "Review deleted successfully"
+        });
+
+    } catch (error) {
+        console.error('Delete review error:', error);
+        return Response.json({
+            error: error.message || "Failed to delete review"
+        }, { status: 500 });
+    }
+}

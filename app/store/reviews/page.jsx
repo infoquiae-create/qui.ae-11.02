@@ -7,7 +7,7 @@ import Image from "next/image"
 import Loading from "@/components/Loading"
 import { useAuth, useUser } from "@clerk/nextjs"
 import axios from "axios"
-import { StarIcon } from "lucide-react"
+import { StarIcon, Trash2 } from "lucide-react"
 
 
 export default function StoreReviews() {
@@ -18,6 +18,7 @@ export default function StoreReviews() {
     const [products, setProducts] = useState([])
     const [showAddModal, setShowAddModal] = useState(false)
     const [selectedProduct, setSelectedProduct] = useState(null)
+    const [deletingReviewId, setDeletingReviewId] = useState(null)
     const [formData, setFormData] = useState({
         customerName: '',
         customerEmail: '',
@@ -50,6 +51,26 @@ export default function StoreReviews() {
             fetchReviews()
         } catch (error) {
             toast.error(error?.response?.data?.error || error.message)
+        }
+    }
+
+    const handleDeleteReview = async (reviewId) => {
+        if (!confirm('Are you sure you want to delete this review?')) {
+            return
+        }
+
+        try {
+            setDeletingReviewId(reviewId)
+            const token = await getToken()
+            await axios.delete(`/api/store/reviews?reviewId=${reviewId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            toast.success('Review deleted successfully')
+            fetchReviews()
+        } catch (error) {
+            toast.error(error?.response?.data?.error || error.message)
+        } finally {
+            setDeletingReviewId(null)
         }
     }
 
@@ -189,6 +210,15 @@ export default function StoreReviews() {
                                                         </button>
                                                     </>
                                                 )}
+                                                <button
+                                                    onClick={() => handleDeleteReview(rev.id)}
+                                                    disabled={deletingReviewId === rev.id}
+                                                    className="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    title="Delete this review"
+                                                >
+                                                    <Trash2 size={14} />
+                                                    Delete
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

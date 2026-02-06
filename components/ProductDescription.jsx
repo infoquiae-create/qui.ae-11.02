@@ -1,5 +1,5 @@
 'use client'
-import { ArrowRight, StarIcon } from "lucide-react"
+import { ArrowRight, StarIcon, Trash2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect } from "react"
@@ -7,13 +7,17 @@ import ReviewForm from "./ReviewForm"
 import axios from "axios"
 import ProductCard from "./ProductCard"
 import { useSelector } from "react-redux"
+import { useUser } from "@clerk/nextjs"
+import toast from "react-hot-toast"
 
 // Updated design - Noon.com style v2
 const ProductDescription = ({ product }) => {
 
+    const { user } = useUser()
     const [reviews, setReviews] = useState([])
     const [loadingReviews, setLoadingReviews] = useState(false)
     const [suggestedProducts, setSuggestedProducts] = useState([])
+    const [deletingReviewId, setDeletingReviewId] = useState(null)
     const allProducts = useSelector((state) => state.product.list || [])
 
     // Calculate rating distribution
@@ -70,6 +74,23 @@ const ProductDescription = ({ product }) => {
 
     const handleReviewAdded = (newReview) => {
         fetchReviews()
+    }
+
+    const handleDeleteReview = async (reviewId) => {
+        if (!confirm('Are you sure you want to delete this review?')) {
+            return
+        }
+
+        try {
+            setDeletingReviewId(reviewId)
+            await axios.delete(`/api/review?reviewId=${reviewId}`)
+            toast.success('Review deleted successfully')
+            fetchReviews()
+        } catch (error) {
+            toast.error(error?.response?.data?.error || 'Failed to delete review')
+        } finally {
+            setDeletingReviewId(null)
+        }
     }
 
     return (
@@ -190,15 +211,27 @@ const ProductDescription = ({ product }) => {
                                                         })}
                                                     </p>
                                                 </div>
-                                                <div className="flex items-center gap-0.5">
-                                                    {Array(5).fill('').map((_, index) => (
-                                                        <StarIcon 
-                                                            key={index} 
-                                                            size={14} 
-                                                            className='text-transparent' 
-                                                            fill={item.rating >= index + 1 ? "#FFA500" : "#D1D5DB"} 
-                                                        />
-                                                    ))}
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-0.5">
+                                                        {Array(5).fill('').map((_, index) => (
+                                                            <StarIcon 
+                                                                key={index} 
+                                                                size={14} 
+                                                                className='text-transparent' 
+                                                                fill={item.rating >= index + 1 ? "#FFA500" : "#D1D5DB"} 
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    {user && item.user.id === user.id && (
+                                                        <button
+                                                            onClick={() => handleDeleteReview(item.id)}
+                                                            disabled={deletingReviewId === item.id}
+                                                            className="p-1.5 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            title="Delete this review"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                             
