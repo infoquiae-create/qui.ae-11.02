@@ -24,12 +24,16 @@ const getImageSrc = (product, index = 0) => {
 }
 
 // Product Card Component
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, index }) => {
   const [hovered, setHovered] = useState(false)
+  const [secondaryLoaded, setSecondaryLoaded] = useState(false)
   const dispatch = useDispatch()
   const { getToken } = useAuth()
   const cartItems = useSelector(state => state.cart.cartItems)
   const itemQuantity = cartItems[product.id] || 0
+  
+  // Only prioritize first 5 products
+  const shouldPrioritize = index < 5
 
   const primaryImage = getImageSrc(product, 0)
   const secondaryImage = getImageSrc(product, 1)
@@ -88,11 +92,13 @@ const ProductCard = ({ product }) => {
             hasSecondary && hovered ? 'opacity-0' : 'opacity-100'
           }`}
           sizes="(max-width: 768px) 100vw, (max-width: 1300px) 50vw, 25vw"
-          priority
+          priority={shouldPrioritize}
+          loading={shouldPrioritize ? 'eager' : 'lazy'}
+          quality={75}
           onError={(e) => { e.currentTarget.src = '/placeholder.png' }}
         />
 
-        {hasSecondary && (
+        {hasSecondary && (hovered || secondaryLoaded) && (
           <Image
             src={secondaryImage}
             alt={productName}
@@ -102,8 +108,10 @@ const ProductCard = ({ product }) => {
               hovered ? 'opacity-100' : 'opacity-0'
             }`}
             sizes="(max-width: 768px) 100vw, (max-width: 1300px) 50vw, 25vw"
-            priority
+            loading="lazy"
+            quality={75}
             onError={(e) => { e.currentTarget.src = '/placeholder.png' }}
+            onLoad={() => setSecondaryLoaded(true)}
           />
         )}
         
@@ -243,8 +251,8 @@ const BestSelling = () => {
                 <div className="absolute bottom-4 right-4 w-10 h-10 bg-gray-200 rounded-full" />
               </div>
             ))
-          : shown.map((product) => (
-              <ProductCard key={product.id} product={product} />
+          : shown.map((product, index) => (
+              <ProductCard key={product.id} product={product} index={index} />
             ))}
       </div>
     </div>

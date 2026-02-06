@@ -5,6 +5,7 @@ import Newsletter from "@/components/Newsletter";
 import OurSpecs from "@/components/OurSpec";
 import LatestProducts from "@/components/LatestProducts";
 import BannerSlider from "@/components/BannerSlider";
+import WelcomeModal from "@/components/WelcomeModal";
 
 import HomeDealsSection from "@/components/HomeDealsSection";
 import BrandDirectory from "@/components/BrandDirectory";
@@ -81,6 +82,7 @@ export default function Home() {
 
     return (
         <div>
+            <WelcomeModal />
             <Hero />
             <LatestProducts />
             {/* <BestSelling /> */}
