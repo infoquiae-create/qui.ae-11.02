@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import authSeller from "@/middlewares/authSeller";
 import { getAuth } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // Debug log helper
@@ -54,7 +55,39 @@ export async function GET(request){
         })
         debugLog('orders found:', orders.length);
 
-        return NextResponse.json({orders})
+        // Enrich orders with user data from Clerk if not in database
+        const enrichedOrders = await Promise.all(
+            orders.map(async (order) => {
+                // If user exists but name/email is missing, fetch from Clerk
+                if (order.user && (!order.user.name || !order.user.email) && order.userId) {
+                    try {
+                        const clerkUser = await clerkClient.users.getUser(order.userId);
+                        const primaryEmail = clerkUser.emailAddresses?.find(e => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
+                        
+                        if (primaryEmail || clerkUser.firstName || clerkUser.lastName) {
+                            order.user = {
+                                ...order.user,
+                                name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || order.user.name,
+                                email: primaryEmail || order.user.email,
+                            };
+                            // Update in database for future requests
+                            await prisma.user.update({
+                                where: { id: order.userId },
+                                data: {
+                                    name: order.user.name,
+                                    email: order.user.email,
+                                }
+                            }).catch(err => console.error('Failed to update user:', err));
+                        }
+                    } catch (err) {
+                        debugLog('Failed to fetch from Clerk for user:', order.userId, err.message);
+                    }
+                }
+                return order;
+            })
+        );
+
+        return NextResponse.json({orders: enrichedOrders})
     } catch (error) {
         console.error('[ORDER API ERROR]', error);
         debugLog('API error:', error);

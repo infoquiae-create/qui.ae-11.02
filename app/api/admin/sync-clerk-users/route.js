@@ -1,4 +1,5 @@
 import { clerkClient } from "@clerk/nextjs/server";
+import { getAuth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -8,14 +9,12 @@ import { NextResponse } from "next/server";
  */
 export async function POST(req) {
   try {
-    // You should verify this is called by an admin
-    // For now, using a simple token check from environment
-    const adminToken = req.headers.get("authorization")?.replace("Bearer ", "");
-    const expectedToken = process.env.ADMIN_SYNC_TOKEN;
+    const { userId } = getAuth(req);
 
-    if (!expectedToken || adminToken !== expectedToken) {
+    // Check if user is admin
+    if (!process.env.ADMIN_EMAIL?.split(',').includes(userId)) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Unauthorized - Admin access required" },
         { status: 401 }
       );
     }
