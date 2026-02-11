@@ -82,7 +82,7 @@ export default function Home() {
 
     return (
         <div>
-            <WelcomeModal />
+            {/* <WelcomeModal /> */}
             <Hero />
             <LatestProducts />
             {/* <BestSelling /> */}

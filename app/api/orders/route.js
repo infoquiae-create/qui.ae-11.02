@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { PaymentMethod } from "@prisma/client";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -274,22 +275,40 @@ export async function POST(request){
                     }
                 } else {
                     // Send regular order confirmation email
-                    const emailResponse = await fetch(`${request.headers.get('origin')}/api/notifications/order-status`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            orderId: order.id,
-                            email: order.user.email,
-                            customerName: order.user.name,
-                            status: 'ORDER_PLACED',
-                            orderItems: order.orderItems
-                        })
-                    });
-                    
-                    if (!emailResponse.ok) {
-                        console.error('Failed to send order confirmation email');
+                    let customerEmail = order.user?.email;
+                    let customerName = order.user?.name;
+
+                    // Fallback: If user not in database, fetch from Clerk
+                    if (!customerEmail && userId) {
+                        try {
+                            const clerkUser = await clerkClient.users.getUser(userId);
+                            const primaryEmail = clerkUser.emailAddresses?.find(e => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
+                            customerEmail = primaryEmail || customerEmail;
+                            customerName = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || customerName;
+                        } catch (clerkError) {
+                            console.error('Failed to fetch user from Clerk:', clerkError);
+                        }
+                    }
+
+                    // Only send email if we have an email address
+                    if (customerEmail) {
+                        const emailResponse = await fetch(`${request.headers.get('origin')}/api/notifications/order-status`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                orderId: order.id,
+                                email: customerEmail,
+                                customerName: customerName || 'Customer',
+                                status: 'ORDER_PLACED',
+                                orderItems: order.orderItems
+                            })
+                        });
+                        
+                        if (!emailResponse.ok) {
+                            console.error('Failed to send order confirmation email');
+                        }
                     }
                 }
             } catch (emailError) {
